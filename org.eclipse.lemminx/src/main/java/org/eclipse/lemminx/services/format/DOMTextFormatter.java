@@ -35,6 +35,9 @@ public class DOMTextFormatter {
 		String text = formatterDocument.getText();
 		int availableLineWidth = parentConstraints.getAvailableLineWidth();
 
+		if (isPreserveEmptyContent() && textNode.isElementContentWhitespace()){
+			return;
+		}
 		int spaceStart = -1;
 		int spaceEnd = -1;
 
@@ -89,5 +92,9 @@ public class DOMTextFormatter {
 
 	private void replaceSpacesWithOneSpace(int spaceStart, int spaceEnd, List<TextEdit> edits) {
 		formatterDocument.replaceSpacesWithOneSpace(spaceStart, spaceEnd, edits);
+	}
+
+	private boolean isPreserveEmptyContent(){
+		return formatterDocument.getSharedSettings().getFormattingSettings().isPreserveEmptyContent();
 	}
 }

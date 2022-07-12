@@ -105,7 +105,6 @@ public class XMLFormatterEmptyElementsTest {
 		assertFormat(expected, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void expandEmptyElementsAndPreserveEmptyContent() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -143,7 +142,6 @@ public class XMLFormatterEmptyElementsTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void collapseEmptyElementsAndPreserveEmptyContent() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();

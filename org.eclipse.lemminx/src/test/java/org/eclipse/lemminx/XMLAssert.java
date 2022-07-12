@@ -1619,7 +1619,7 @@ public class XMLAssert {
 		String formatted = applyEdits(document, edits);
 		assertEquals(expected, formatted);
 
-		if (expectedEdits != null) {
+		if (expectedEdits != null && expectedEdits.length != 0) {
 			Assertions.assertArrayEquals(expectedEdits, edits.toArray(new TextEdit[0]));
 		}
 	}

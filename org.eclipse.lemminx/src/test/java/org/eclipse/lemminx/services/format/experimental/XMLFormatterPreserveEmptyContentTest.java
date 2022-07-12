@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
  */
 public class XMLFormatterPreserveEmptyContentTest {
 
-	@Disabled
 	@Test
 	public void testPreserveEmptyContentTag() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -40,7 +39,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testDontPreserveEmptyContentTag() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -49,11 +47,10 @@ public class XMLFormatterPreserveEmptyContentTest {
 		String content = "<a>\r" + //
 				"     " + //
 				"</a>";
-		String expected = "<a></a>";
+		String expected = "<a> </a>";
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testPreserveTextContent() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -68,7 +65,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testPreserveTextContent2() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -83,7 +79,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testPreserveEmptyContentTagWithSiblings() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -100,7 +95,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testPreserveEmptyContentTagWithSiblingContent() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -119,7 +113,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testDontPreserveEmptyContentTagWithSiblingContent() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -138,7 +131,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testPreserveEmptyContentTagWithSiblingWithComment() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
@@ -157,7 +149,6 @@ public class XMLFormatterPreserveEmptyContentTest {
 		assertFormat(content, expected, settings);
 	}
 
-	@Disabled
 	@Test
 	public void testDontPreserveEmptyContentTagWithSiblingWithComment() throws BadLocationException {
 		SharedSettings settings = new SharedSettings();
