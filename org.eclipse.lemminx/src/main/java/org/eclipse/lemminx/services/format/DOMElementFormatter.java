@@ -71,41 +71,41 @@ public class DOMElementFormatter {
 		FormatElementCategory formatElementCategory = parentConstraints.getFormatElementCategory();
 		int startTagOffset = element.getStartTagOpenOffset();
 		boolean addLineSeparator = element.getParentElement() == null
-						&& element.getPreviousSibling() == null;
+				&& element.getPreviousSibling() == null;
 
 		switch (formatElementCategory) {
-		case PreserveSpace:
-			// Preserve existing spaces
-			break;
-		case MixedContent:
-			// Remove spaces and indent if the content between start tag and parent start
-			// tag is some white spaces
-			// before formatting: <a>    <b> </b> example text </a>
-			// after formatting: <a>\n  <b> </b> example text </a>
-			int parentStartCloseOffset = element.getParentElement().getStartTagCloseOffset() + 1;
-			if (parentStartCloseOffset != startTagOffset && StringUtils.isWhitespace(formatterDocument.getText(),
-					parentStartCloseOffset, startTagOffset)) {
-				int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
-						edits);
-				width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
-			}
-			break;
-		case IgnoreSpace:
-			// If preserve new lines
-			int preservedNewLines = getPreservedNewlines();
-			int currentNewLineCount = getExistingNewLineCount(formatterDocument.getText(), startTagOffset,
-					formatterDocument.getLineDelimiter());
-			if (currentNewLineCount > preservedNewLines) {
-				replaceLeftSpacesWithIndentationWithMultiNewLines(indentLevel, startTagOffset,
-						preservedNewLines + 1, edits);
-			} else {
-				// remove spaces and indent
-				int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
-						edits);
-				width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
-			}
-		case NormalizeSpace:
-			break;
+			case PreserveSpace:
+				// Preserve existing spaces
+				break;
+			case MixedContent:
+				// Remove spaces and indent if the content between start tag and parent start
+				// tag is some white spaces
+				// before formatting: <a> <b> </b> example text </a>
+				// after formatting: <a>\n <b> </b> example text </a>
+				int parentStartCloseOffset = element.getParentElement().getStartTagCloseOffset() + 1;
+				if (parentStartCloseOffset != startTagOffset && StringUtils.isWhitespace(formatterDocument.getText(),
+						parentStartCloseOffset, startTagOffset)) {
+					int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
+							edits);
+					width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
+				}
+				break;
+			case IgnoreSpace:
+				// If preserve new lines
+				int preservedNewLines = getPreservedNewlines();
+				int currentNewLineCount = getExistingNewLineCount(formatterDocument.getText(), startTagOffset,
+						formatterDocument.getLineDelimiter());
+				if (currentNewLineCount > preservedNewLines) {
+					replaceLeftSpacesWithIndentationWithMultiNewLines(indentLevel, startTagOffset,
+							preservedNewLines + 1, edits);
+				} else {
+					// remove spaces and indent
+					int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
+							edits);
+					width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
+				}
+			case NormalizeSpace:
+				break;
 		}
 
 		if (formatElementCategory != FormatElementCategory.PreserveSpace) {
@@ -113,35 +113,39 @@ public class DOMElementFormatter {
 
 			boolean formatted = false;
 			switch (emptyElements) {
-			case expand: {
-				if (element.isSelfClosed()) {
-					// expand empty element: <example /> -> <example></example>
-					StringBuilder tag = new StringBuilder();
-					tag.append(">");
-					tag.append("</");
-					tag.append(element.getTagName());
-					tag.append('>');
-					createTextEditIfNeeded(element.getEnd() - 3, element.getEnd(), tag.toString(), edits);
-					formatted = true;
-				}
-				break;
-			}
-			case collapse: {
-				// collapse empty element: <example></example> -> <example />
-				if (!element.isSelfClosed() && (end == -1 || element.getEndTagOpenOffset() + 1 < end)) {
-					// Do not collapse if range is does not cover the element
-					StringBuilder tag = new StringBuilder();
-					if (isSpaceBeforeEmptyCloseTag()) {
-						tag.append(" ");
+				case expand: {
+					if (element.isSelfClosed()) {
+						// expand empty element: <example /> -> <example></example>
+						StringBuilder tag = new StringBuilder();
+						tag.append(">");
+						tag.append("</");
+						tag.append(element.getTagName());
+						tag.append('>');
+						createTextEditIfNeeded(element.getEnd() - 3, element.getEnd(), tag.toString(), edits);
+						formatted = true;
+						width += element.getTagName().length() + 4;
 					}
-					tag.append("/>");
-					createTextEditIfNeeded(element.getStartTagCloseOffset() - 1, element.getEnd(), tag.toString(),
-							edits);
-					formatted = true;
+					break;
 				}
-				break;
-			}
-			default:
+				case collapse: {
+					// collapse empty element: <example></example> -> <example />
+					if (!element.isSelfClosed() && (end == -1 || element.getEndTagOpenOffset() + 1 < end)) {
+						// Do not collapse if range is does not cover the element
+						StringBuilder tag = new StringBuilder();
+						if (isSpaceBeforeEmptyCloseTag()) {
+							tag.append(" ");
+							width++;
+						}
+						tag.append("/>");
+						createTextEditIfNeeded(element.getStartTagCloseOffset() - 1, element.getEnd(), tag.toString(),
+								edits);
+						formatted = true;
+						width += 2;
+					}
+					break;
+				}
+				default:
+					width++;
 			}
 
 			if (!formatted) {
@@ -155,10 +159,13 @@ public class DOMElementFormatter {
 						// c=""|/> --> add newline here at '|'
 						replaceLeftSpacesWithIndentation(indentLevel + getSplitAttributesIndentSize(), offset, true,
 								edits);
+						width = 2;
 					} else if (isSpaceBeforeEmptyCloseTag()) {
 						replaceLeftSpacesWithOneSpace(offset, edits);
+						width += 3;
 					} else {
 						removeLeftSpaces(offset, edits);
+						width += 2;
 					}
 				} else if (element.isStartTagClosed()) {
 					formatElementStartTagCloseBracket(element, parentConstraints, edits);
@@ -225,33 +232,33 @@ public class DOMElementFormatter {
 		int endTagOffset = element.getEndTagOpenOffset();
 
 		switch (formatElementCategory) {
-		case PreserveSpace:
-			// Preserve existing spaces
-			break;
-		case MixedContent:
-			// Remove spaces and indent if the last child is an element, not text
-			// before formatting: <a> example text <b> </b>    </a>
-			// after formatting: <a> example text <b> </b>\n</a>
-			if (element.getLastChild().isElement()
-					&& Character.isWhitespace(formatterDocument.getText().charAt(endTagOffset - 1))) {
-				replaceLeftSpacesWithIndentation(indentLevel, endTagOffset, true, edits);
-			}
-			break;
-		case IgnoreSpace:
-			// If preserve new lines
-			int preservedNewLines = getPreservedNewlines();
-			int currentNewLineCount = getExistingNewLineCount(formatterDocument.getText(), endTagOffset,
-					formatterDocument.getLineDelimiter());
-			if (currentNewLineCount > preservedNewLines) {
-				replaceLeftSpacesWithIndentationWithMultiNewLines(indentLevel, endTagOffset, preservedNewLines + 1,
-						edits);
-			} else {
-				// remove spaces and indent
-				replaceLeftSpacesWithIndentation(indentLevel, endTagOffset, true, edits);
+			case PreserveSpace:
+				// Preserve existing spaces
 				break;
-			}
-		case NormalizeSpace:
-			break;
+			case MixedContent:
+				// Remove spaces and indent if the last child is an element, not text
+				// before formatting: <a> example text <b> </b> </a>
+				// after formatting: <a> example text <b> </b>\n</a>
+				if (element.getLastChild().isElement()
+						&& Character.isWhitespace(formatterDocument.getText().charAt(endTagOffset - 1))) {
+					replaceLeftSpacesWithIndentation(indentLevel, endTagOffset, true, edits);
+				}
+				break;
+			case IgnoreSpace:
+				// If preserve new lines
+				int preservedNewLines = getPreservedNewlines();
+				int currentNewLineCount = getExistingNewLineCount(formatterDocument.getText(), endTagOffset,
+						formatterDocument.getLineDelimiter());
+				if (currentNewLineCount > preservedNewLines) {
+					replaceLeftSpacesWithIndentationWithMultiNewLines(indentLevel, endTagOffset, preservedNewLines + 1,
+							edits);
+				} else {
+					// remove spaces and indent
+					replaceLeftSpacesWithIndentation(indentLevel, endTagOffset, true, edits);
+					break;
+				}
+			case NormalizeSpace:
+				break;
 		}
 		// 2) remove some spaces between the end tag and and close bracket
 		// before formatting : <a></a[space][space]>
@@ -316,19 +323,19 @@ public class DOMElementFormatter {
 			if (element.isClosed() && element.isEmpty()) {
 				// Element is empty and closed
 				switch (emptyElements) {
-				case expand:
-				case collapse: {
-					if (isPreserveEmptyContent()) {
-						// preserve content
-						if (element.hasChildNodes()) {
-							// The element is empty and contains somes spaces which must be preserved
-							return EmptyElements.ignore;
+					case expand:
+					case collapse: {
+						if (isPreserveEmptyContent()) {
+							// preserve content
+							if (element.hasChildNodes()) {
+								// The element is empty and contains somes spaces which must be preserved
+								return EmptyElements.ignore;
+							}
 						}
+						return emptyElements;
 					}
-					return emptyElements;
-				}
-				default:
-					return emptyElements;
+					default:
+						return emptyElements;
 				}
 			}
 		}
