@@ -38,6 +38,17 @@ public class XMLFormatterMaxLineWithTest extends AbstractCacheBasedTest {
 	}
 
 	@Test
+	public void splitTextLongElementName() throws BadLocationException {
+		String content = "<aaaaaa>abcde fghi</aaaaaa>";
+		String expected = "<aaaaaa>abcde" + //
+				System.lineSeparator() + //
+				"fghi</aaaaaa>";
+		assertFormat(content, expected, 6, //
+				te(0, 13, 0, 14, System.lineSeparator()));
+		assertFormat(expected, expected, 6);
+	}
+
+	@Test
 	public void splitMixedText() throws BadLocationException {
 		String content = "<a><b /> efgh</a>";
 		String expected = "<a><b />" + //
@@ -53,6 +64,83 @@ public class XMLFormatterMaxLineWithTest extends AbstractCacheBasedTest {
 		String content = "<a>abcde fghi</a>";
 		String expected = content;
 		assertFormat(content, expected, 20);
+	}
+
+	@Test
+	public void splitWithAttribute() throws BadLocationException {
+		SharedSettings settings = new SharedSettings();
+		settings.getFormattingSettings().setTabSize(4);
+		String content = "<aaaaaaaaa bb=\"tes t\" c=\"a\" d=\"a\" e=\"a\"> </aaaaaaaaa>";
+		String expected = "<aaaaaaaaa" + System.lineSeparator() + //
+				"    bb=\"tes t\" c=\"a\"" + System.lineSeparator() + //
+				"    d=\"a\" e=\"a\"> </aaaaaaaaa>";
+		assertFormat(content, expected, settings, 20, //
+				te(0, 10, 0, 11, System.lineSeparator() + "    "), //
+				te(0, 27, 0, 28, System.lineSeparator() + "    "));
+		assertFormat(expected, expected, settings, 20);
+	}
+
+	@Test
+	public void splitWithAttributeMixedDontSplit() throws BadLocationException {
+		SharedSettings settings = new SharedSettings();
+		settings.getFormattingSettings().setTabSize(4);
+		settings.getFormattingSettings().setSpaceBeforeEmptyCloseTag(false);
+		String content = "<a bb=\"test\"> <b/> h </a>";
+		String expected = "<a" + System.lineSeparator() + //
+				"    bb=\"test\">" + System.lineSeparator() + //
+				"    <b/> h </a>";
+		assertFormat(content, expected, settings, 10, //
+		te(0, 2, 0, 3, System.lineSeparator() + "    "), //
+		te(0, 13, 0, 14, System.lineSeparator() + "    "));
+		assertFormat(expected, expected, settings, 10);
+	}
+
+	@Test
+	public void splitWithAttributeMixedSplit() throws BadLocationException {
+		SharedSettings settings = new SharedSettings();
+		settings.getFormattingSettings().setTabSize(4);
+		settings.getFormattingSettings().setSpaceBeforeEmptyCloseTag(false);
+		String content = "<a bb=\"test\"> <b/> gh </a>";
+		String expected = "<a" + System.lineSeparator() + //
+				"    bb=\"test\">" + System.lineSeparator() + //
+				"    <b/>" + System.lineSeparator() + //
+				"gh </a>";
+		assertFormat(content, expected, settings, 10, //
+		te(0, 2, 0, 3, System.lineSeparator() + "    "), //
+		te(0, 13, 0, 14, System.lineSeparator() + "    "), //
+		te(0, 18, 0, 19, System.lineSeparator()));
+		assertFormat(expected, expected, settings, 10);
+	}
+
+	@Test
+	public void splitWithAttributeNested() throws BadLocationException {
+		SharedSettings settings = new SharedSettings();
+		settings.getFormattingSettings().setTabSize(4);
+		String content = "<a bb=\"test\"> <b c=\"test\"> </b>  </a>";
+		String expected = "<a" + System.lineSeparator() + //
+				"    bb=\"test\">" + System.lineSeparator() + //
+				"    <b" + System.lineSeparator() + //
+				"        c=\"test\">" + System.lineSeparator() + //
+				"    </b>" + System.lineSeparator() + //
+				"</a>";
+		assertFormat(content, expected, settings, 10, //
+				te(0, 10, 0, 11, System.lineSeparator() + "    "), //
+				te(0, 27, 0, 28, System.lineSeparator() + "    "));
+		assertFormat(expected, expected, settings, 10);
+	}
+
+	@Test
+	public void splitWithAttributeKeepSameLine() throws BadLocationException {
+		SharedSettings settings = new SharedSettings();
+		settings.getFormattingSettings().setTabSize(4);
+		String content = "<aaaaaaaaa bb=\"t tt\" c=\"a\" d=\"a\" e=\"a\"> </aaaaaaaaa>";
+		String expected = "<aaaaaaaaa bb=\"t tt\"" + System.lineSeparator() + //
+				"    c=\"a\" d=\"a\"" + System.lineSeparator() + //
+				"    e=\"a\"> </aaaaaaaaa>";
+		assertFormat(content, expected, settings, 20, //
+				te(0, 20, 0, 21, System.lineSeparator() + "    "), //
+				te(0, 32, 0, 33, System.lineSeparator() + "    "));
+		assertFormat(expected, expected, settings, 20);
 	}
 
 	@Test
@@ -123,6 +211,16 @@ public class XMLFormatterMaxLineWithTest extends AbstractCacheBasedTest {
 				te(9, 18, 10, 8, " "), //
 				te(11, 20, 14, 8, " "));
 		assertFormat(expected, expected, 80);
+	}
+
+	private static void assertFormat(String unformatted, String expected, SharedSettings sharedSettings,
+			int maxLineWidth, TextEdit... expectedEdits)
+			throws BadLocationException {
+		sharedSettings.getFormattingSettings().setMaxLineWidth(maxLineWidth);
+		sharedSettings.getFormattingSettings().setJoinContentLines(true);
+		// Force to "experimental" formatter
+		sharedSettings.getFormattingSettings().setExperimental(true);
+		XMLAssert.assertFormat(null, unformatted, expected, sharedSettings, "test.xml", Boolean.FALSE, expectedEdits);
 	}
 
 	private static void assertFormat(String unformatted, String expected, int maxLineWidth, TextEdit... expectedEdits)

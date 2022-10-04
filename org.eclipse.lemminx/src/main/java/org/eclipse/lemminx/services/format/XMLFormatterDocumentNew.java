@@ -325,12 +325,12 @@ public class XMLFormatterDocumentNew {
 		}
 	}
 
-	public void formatAttributeValue(DOMAttr attr, XMLFormatterDocumentNew formatterDocument, int indentLevel,
+	public void formatAttributeValue(DOMAttr attr, XMLFormatterDocumentNew formatterDocument, XMLFormattingConstraints parentConstraints,
 			XMLFormattingOptions formattingOptions, List<TextEdit> edits) {
 		if (formatterParticipants != null) {
 			for (IFormatterParticipant formatterParticipant : formatterParticipants) {
 				try {
-					if (formatterParticipant.formatAttributeValue(attr, formatterDocument, indentLevel,
+					if (formatterParticipant.formatAttributeValue(attr, formatterDocument, parentConstraints,
 							formattingOptions, edits)) {
 						return;
 					}

@@ -20,6 +20,7 @@ import org.eclipse.lemminx.extensions.xsi.XSISchemaModel;
 import org.eclipse.lemminx.extensions.xsi.settings.XSISchemaLocationSplit;
 import org.eclipse.lemminx.services.extensions.format.IFormatterParticipant;
 import org.eclipse.lemminx.services.format.XMLFormatterDocumentNew;
+import org.eclipse.lemminx.services.format.XMLFormattingConstraints;
 import org.eclipse.lemminx.settings.XMLFormattingOptions;
 import org.eclipse.lemminx.utils.StringUtils;
 import org.eclipse.lemminx.utils.XMLBuilder;
@@ -160,12 +161,13 @@ public class XSIFormatterParticipant implements IFormatterParticipant {
 
 	@Override
 	public boolean formatAttributeValue(DOMAttr attr, XMLFormatterDocumentNew formatterDocument,
-			int indentLevel, XMLFormattingOptions formattingOptions, List<TextEdit> edits) {
+			XMLFormattingConstraints parentConstraints, XMLFormattingOptions formattingOptions, List<TextEdit> edits) {
 
 		XSISchemaLocationSplit split = XSISchemaLocationSplit.getSplit(formattingOptions);
 
 		if (split == XSISchemaLocationSplit.none || !XSISchemaModel.isXSISchemaLocationAttr(attr.getName(), attr)
 				|| getFirstContentOffset(attr.getOriginalValue()) == -1) {
+			parentConstraints.setAvailableLineWidth(parentConstraints.getAvailableLineWidth() - attr.getValue().length());
 			return false;
 		}
 
@@ -185,7 +187,8 @@ public class XSIFormatterParticipant implements IFormatterParticipant {
 					+ formattingOptions.getSplitAttributesIndentSize() * tabSize;
 		} else if (formattingOptions.isPreserveAttributeLineBreaks()) {
 			indentSpaceOffset = attrValueStart
-					- formatterDocument.getOffsetWithPreserveLineBreaks(startOfLineOffset, attrValueStart, tabSize, formattingOptions.isInsertSpaces());
+					- formatterDocument.getOffsetWithPreserveLineBreaks(startOfLineOffset, attrValueStart, tabSize,
+							formattingOptions.isInsertSpaces());
 		} else {
 			indentSpaceOffset = formatterDocument.getNormalizedLength(startOfLineOffset, attrValueStart + 1)
 					- startOfLineOffset;
@@ -200,7 +203,8 @@ public class XSIFormatterParticipant implements IFormatterParticipant {
 			if (Character.isWhitespace(attrValue.charAt(i)) && !Character.isWhitespace(attrValue.charAt(i + 1))
 					&& !StringUtils.isQuote(attrValue.charAt(from - attrValueStart))) {
 				// Insert newline and indent where required based on setting
-				if (locationNum % lineFeed == 0) {
+				if (locationNum % lineFeed == 0 || indentSpaceOffset + (attr.getNodeAttrValue().getEnd()
+						- getFirstContentOffset(attr.getOriginalValue())) > parentConstraints.getAvailableLineWidth()) {
 					formatterDocument.replaceLeftSpacesWithIndentationWithOffsetSpaces(indentSpaceOffset,
 							attrValueStart + i + 1,
 							true, edits);

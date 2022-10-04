@@ -35,6 +35,7 @@ public class DOMAttributeFormatter {
 
 	public void formatAttribute(DOMAttr attr, int prevOffset, boolean singleAttribute, boolean useSettings,
 			XMLFormattingConstraints parentConstraints, List<TextEdit> edits) {
+		int availableLineWidth = parentConstraints.getAvailableLineWidth();
 		// 1) format before attribute name : indent left of the attribute name
 		// ex : <foo[space][space]attr=""
 		// --> <foo[space]attr=""
@@ -44,29 +45,22 @@ public class DOMAttributeFormatter {
 			if (isPreserveAttributeLineBreaks() && hasLineBreak(prevOffset, attr.getStart())) {
 				replaceLeftSpacesWithIndentation(indentLevel + 1, attr.getStart(), true, edits);
 				alreadyIndented = true;
+				availableLineWidth = getMaxLineWidth() - getTabSize() * (indentLevel + 1);
 			} else if (isSplitAttributes() && !singleAttribute) {
 				// move the attribute to a new line and indent it.
 				replaceLeftSpacesWithIndentation(indentLevel + getSplitAttributesIndentSize(), attr.getStart(), true,
 						edits);
 				alreadyIndented = true;
+			} else {
+				// counts the space between the start tag name and attribute value
+				availableLineWidth --;
 			}
-		}
-		if (!alreadyIndented) {
-			// // remove extra whitespaces between previous attribute
-			// attr0='name'[space][space][space]attr1='name' -->
-			// attr0='name'[space]attr1='name'
-
-			// Adjust the startAttr to avoid ignoring invalid content
-			// ex : <asdf |""`=asdf />
-			// must be adjusted with <asdf ""|`=asdf /> to keep the invalid content ""
-			int from = prevOffset;
-			int to = attr.getStart();
-			replaceLeftSpacesWithOneSpace(from, to, edits);
 		}
 
 		// 2) format delimiter : remove whitespaces between '='
 		// ex : <foo attr = ""
 		// --> <foo attr=""
+		int attributeNamelength = 0;
 		if (attr.hasDelimiter()) {
 			int delimiterOffset = attr.getDelimiterOffset(); // <foo attr =| ""
 
@@ -79,7 +73,33 @@ public class DOMAttributeFormatter {
 				int attrValueStart = attr.getNodeAttrValue().getStart(); // <foo attr = |""
 				removeLeftSpaces(delimiterOffset, attrValueStart, edits);
 			}
-			formatterDocument.formatAttributeValue(attr, formatterDocument, parentConstraints.getIndentLevel(), getFormattingSettings(), edits);
+			// Add width for length of attribute name and 3 for '=""'
+			// between start tag name and tag
+			attributeNamelength = attrNameEnd - attr.getNodeAttrName().getStart() + 3;
+			parentConstraints.setAvailableLineWidth(availableLineWidth - attributeNamelength);
+			formatterDocument.formatAttributeValue(attr, formatterDocument, parentConstraints,
+					getFormattingSettings(), edits);
+		}
+
+		if (!alreadyIndented) {
+			int from = prevOffset;
+			int to = attr.getStart();
+			availableLineWidth = parentConstraints.getAvailableLineWidth();
+			if (availableLineWidth < 0) {
+				int indentLevel = parentConstraints.getIndentLevel();
+				replaceLeftSpacesWithIndentation(indentLevel + 1, to, true, edits);
+				parentConstraints.setAvailableLineWidth(
+						getMaxLineWidth() - getTabSize() - attr.getValue().length() - attributeNamelength);
+			} else {
+				// remove extra whitespaces between previous attribute
+				// attr0='name'[space][space][space]attr1='name' -->
+				// attr0='name'[space]attr1='name'
+
+				// Adjust the startAttr to avoid ignoring invalid content
+				// ex : <asdf |""`=asdf />
+				// must be adjusted with <asdf ""|`=asdf /> to keep the invalid content ""
+				replaceLeftSpacesWithOneSpace(from, to, edits);
+			}
 		}
 
 		// replace current quote with preferred quote in case of attribute value
@@ -144,5 +164,13 @@ public class DOMAttributeFormatter {
 
 	private EnforceQuoteStyle getEnforceQuoteStyle() {
 		return formatterDocument.getSharedSettings().getFormattingSettings().getEnforceQuoteStyle();
+	}
+
+	private int getTabSize() {
+		return formatterDocument.getSharedSettings().getFormattingSettings().getTabSize();
+	}
+
+	private int getMaxLineWidth() {
+		return formatterDocument.getMaxLineWidth();
 	}
 }

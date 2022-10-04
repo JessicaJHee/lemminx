@@ -11,6 +11,7 @@
 *******************************************************************************/
 package org.eclipse.lemminx.services.format;
 
+import java.util.FormatterClosedException;
 import java.util.List;
 
 import org.eclipse.lemminx.commons.BadLocationException;
@@ -85,9 +86,12 @@ public class DOMElementFormatter {
 				int parentStartCloseOffset = element.getParentElement().getStartTagCloseOffset() + 1;
 				if (parentStartCloseOffset != startTagOffset && StringUtils.isWhitespace(formatterDocument.getText(),
 						parentStartCloseOffset, startTagOffset)) {
-					int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
+ 					int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
 							edits);
-					width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
+					width = nbSpaces + element.getTagName().length() + 1;
+					if (!addLineSeparator){
+						width -= formatterDocument.getLineDelimiter().length();
+					}
 				}
 				break;
 			case IgnoreSpace:
@@ -102,12 +106,15 @@ public class DOMElementFormatter {
 					// remove spaces and indent
 					int nbSpaces = replaceLeftSpacesWithIndentation(indentLevel, startTagOffset, !addLineSeparator,
 							edits);
-					width = nbSpaces + element.getStartTagCloseOffset() - startTagOffset;
+					width = nbSpaces + element.getTagName().length() + 1;
+					if (!addLineSeparator){
+						width -= formatterDocument.getLineDelimiter().length();
+					}
 				}
 			case NormalizeSpace:
 				break;
 		}
-
+		parentConstraints.setAvailableLineWidth(parentConstraints.getAvailableLineWidth() - width);
 		if (formatElementCategory != FormatElementCategory.PreserveSpace) {
 			formatAttributes(element, parentConstraints, edits);
 
