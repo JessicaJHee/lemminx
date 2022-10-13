@@ -149,6 +149,7 @@ public class DOMElementFormatter {
 					// - <foo attr1="" attr2=""></foo>
 					createTextEditIfNeeded(from, to, tag.toString(), edits);
 					formatted = true;
+					width += element.getTagName().length() + 4;
 				}
 				break;
 			}
@@ -161,6 +162,7 @@ public class DOMElementFormatter {
 					StringBuilder tag = new StringBuilder();
 					if (isSpaceBeforeEmptyCloseTag()) {
 						tag.append(" ");
+						width++;
 					}
 					tag.append("/>");
 					// get the from offset:
