@@ -7,7 +7,10 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
     - name: Check out code 
       uses: actions/checkout@v3
@@ -17,5 +20,9 @@ jobs:
         java-version: '8'
         distribution: 'adopt'
         cache: 'maven'
-    - name: Run Tests
-      run: ./mvnw.cmd -B '-DcacheInRepoDir=true' clean verify
+    - name: Run Tests on Windows
+      if: runner.os == 'Windows'
+      run: ./mvnw.cmd -B '-Dlemminx.cacheInRepoDir' clean verify
+    - name: Run Tests on Linux
+      if: runner.os == 'Linux'
+      run: ./mvnw -B clean verify

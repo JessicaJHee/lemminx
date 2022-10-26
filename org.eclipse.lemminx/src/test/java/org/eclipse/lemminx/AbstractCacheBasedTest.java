@@ -39,7 +39,7 @@ public abstract class AbstractCacheBasedTest {
 
 	static {
 		try {
-			String cacheInRepoDir = System.getProperty("cacheInRepoDir");
+			String cacheInRepoDir = System.getProperty("lemminx.cacheInRepoDir");
 			if (StringUtils.isEmpty(cacheInRepoDir)) {
 				parentDir = Files.createTempDirectory("lemminx");
 			} else {
