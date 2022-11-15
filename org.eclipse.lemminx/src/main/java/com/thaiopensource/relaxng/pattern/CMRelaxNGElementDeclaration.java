@@ -227,7 +227,7 @@ public class CMRelaxNGElementDeclaration implements CMElementDeclaration {
 
 	@Override
 	public boolean isMixedContent() {
-		return false;
+		return pattern.getContentType() == Pattern.MIXED_CONTENT_TYPE;
 	}
 
 	@Override
